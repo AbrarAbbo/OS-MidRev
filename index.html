@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operating Systems Quiz</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f4f6f9;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 2rem;
+    width: 100%;
+    max-width: 680px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 0.25rem;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 1.5rem;
+  }
+  .progress-bg {
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    margin-bottom: 1.5rem;
+  }
+  .progress-fill {
+    height: 6px;
+    background: linear-gradient(90deg, #4f8ef7, #7c3aed);
+    border-radius: 3px;
+    transition: width 0.35s ease;
+  }
+  .q-counter {
+    font-size: 12px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+  .q-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a2e;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+  .opt-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 11px 15px;
+    margin-bottom: 9px;
+    background: #fafafa;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  }
+  .opt-btn:hover:not(:disabled) {
+    background: #f0f4ff;
+    border-color: #4f8ef7;
+    transform: translateX(3px);
+  }
+  .opt-btn.correct {
+    background: #e8faf0;
+    border-color: #22c55e;
+    color: #15803d;
+    font-weight: 600;
+  }
+  .opt-btn.wrong {
+    background: #fff0f0;
+    border-color: #ef4444;
+    color: #b91c1c;
+  }
+  .opt-btn.reveal {
+    background: #e8faf0;
+    border-color: #22c55e;
+    color: #15803d;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+  .opt-btn:disabled { cursor: default; transform: none; }
+  .feedback {
+    font-size: 13px;
+    min-height: 20px;
+    margin: 4px 0 14px;
+    color: #555;
+    font-weight: 500;
+  }
+  .feedback.ok { color: #15803d; }
+  .feedback.err { color: #b91c1c; }
+  .next-btn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg, #4f8ef7, #7c3aed);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.15s;
+  }
+  .next-btn:hover { opacity: 0.88; }
+
+  /* Score screen */
+  #score-card { display: none; text-align: center; padding: 1.5rem 0; }
+  .trophy { font-size: 56px; margin-bottom: 0.5rem; }
+  #score-card h2 { font-size: 22px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .score-big { font-size: 52px; font-weight: 800; background: linear-gradient(90deg, #4f8ef7, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .score-pct { font-size: 16px; color: #888; margin-bottom: 0.25rem; }
+  .score-msg { font-size: 15px; color: #444; margin-bottom: 1.5rem; }
+  .bars { display: flex; justify-content: center; gap: 24px; margin: 1.25rem 0 1.75rem; }
+  .bar-item { text-align: center; }
+  .bar-num { font-size: 22px; font-weight: 700; }
+  .bar-num.green { color: #22c55e; }
+  .bar-num.red { color: #ef4444; }
+  .bar-label { font-size: 12px; color: #aaa; }
+  .restart-btn {
+    padding: 11px 28px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg, #4f8ef7, #7c3aed);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .restart-btn:hover { opacity: 0.88; }
+
+  @media (max-width: 500px) {
+    .card { padding: 1.25rem; }
+    h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Operating Systems Quiz</h1>
+  <p class="subtitle">60 questions &mdash; select the correct answer</p>
+
+  <div class="progress-bg"><div class="progress-fill" id="progress-bar" style="width:0%"></div></div>
+
+  <div id="quiz-body">
+    <div class="q-counter" id="q-counter"></div>
+    <div class="q-text" id="q-text"></div>
+    <div id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQ()">Next question &rarr;</button>
+  </div>
+
+  <div id="score-card">
+    <div class="trophy" id="trophy">🎉</div>
+    <h2>Quiz Complete!</h2>
+    <div class="score-big" id="score-big"></div>
+    <div class="score-pct" id="score-pct"></div>
+    <div class="bars">
+      <div class="bar-item"><div class="bar-num green" id="correct-count"></div><div class="bar-label">Correct</div></div>
+      <div class="bar-item"><div class="bar-num red" id="wrong-count"></div><div class="bar-label">Wrong</div></div>
+    </div>
+    <div class="score-msg" id="score-msg"></div>
+    <button class="restart-btn" onclick="startQuiz()">Try Again</button>
+  </div>
+</div>
+
+<script>
+const QS = [
+  {q:"1. What is an operating system?",opts:["An interface between the hardware and application programs","A system service provider to the application programs","A resource allocator and control program","All the above"],a:3},
+  {q:"2. ___ selects which process should be executed next and allocates CPU.",opts:["Short-term scheduler","Operating system","Long-term scheduler","Dispatcher"],a:0},
+  {q:"3. When CPU switches to another process, saving the old state and loading the new is called a:",opts:["Process Control Block","Operating system","Context switch","Process Scheduling"],a:2},
+  {q:"4. Fork is:",opts:["Context switch","Dispatching of the child","Creation of a new process","All the above"],a:2},
+  {q:"5. The ___ selects which processes should be brought into the ready queue.",opts:["Short-term scheduler","Long-term scheduler","Dispatcher","None of the above"],a:1},
+  {q:"6. The ___ scheduling algorithm allows running processes to be temporarily suspended.",opts:["Preemptive","Non-Preemptive","FCFS","Shortest job first"],a:0},
+  {q:"7. The computing resources which the operating system allocates are:",opts:["CPU","Memory","I/O devices","All the above"],a:3},
+  {q:"8. When a process creates a new process using fork(), which of the following states is shared between parent and child?",opts:["Stack","Data","Registers","Nothing is shared"],a:3},
+  {q:"9. The ___ state is where the process is being created.",opts:["New","Ready","Waiting","Running"],a:0},
+  {q:"10. The ___ state is where the process is being executed.",opts:["New","Ready","Waiting","Running"],a:3},
+  {q:"11. The ___ state is where the process is waiting for some event to occur (such as I/O).",opts:["New","Ready","Waiting","Running"],a:2},
+  {q:"12. The ___ state is where the process is waiting to be assigned to a processor.",opts:["New","Ready","Waiting","Running"],a:1},
+  {q:"13. ___ is a programming interface to the services provided by the OS.",opts:["Kernel","Process Control Block","System Calls","All the above"],a:2},
+  {q:"14. The ___ gives control of the CPU to the process selected by the short-term scheduler.",opts:["Process Control Block","Dispatcher","Scheduler","None of the above"],a:1},
+  {q:"15. Which scheduling algorithm allocates the CPU first to the process that requests the CPU first?",opts:["FCFS","Priority","Shortest job first","None of the above"],a:0},
+  {q:"16. The number of processes completing in a unit of time.",opts:["Turnaround time","Waiting time","Utilization","Throughput"],a:3},
+  {q:"17. What scheduler executes jobs to completion in arrival order?",opts:["FCFS","Priority","Shortest job first","RR"],a:0},
+  {q:"18. Which scheduling algorithm is difficult to implement practically?",opts:["FCFS","Priority","Shortest job first","RR"],a:2},
+  {q:"19. Which scheduler has high average waiting time as short jobs may wait behind long jobs?",opts:["FCFS","Priority","Shortest job first","RR"],a:0},
+  {q:"20. Which scheduler moves the running process to the ready queue after a certain time slice?",opts:["FCFS","Priority","Shortest job first","Round Robin"],a:3},
+  {q:"21. Which non-preemptive scheduler selects a job with the least amount of work from the ready queue?",opts:["FCFS","Priority","Shortest job first","Round Robin"],a:2},
+  {q:"22. Which preemptive scheduler selects a job with the least amount of work from the ready queue?",opts:["SRTF","Priority","SJF","Round Robin"],a:0},
+  {q:"23. Which scheduler selects a job with the highest given importance from the ready queue?",opts:["FCFS","Priority","Shortest job first","Round Robin"],a:1},
+  {q:'24. Consider: main{ fork(); fork(); printf("hello"); } — how many times will "hello" be printed?',opts:["4","6","8","9"],a:0},
+  {q:"25. What is the type of the Round Robin scheduler?",opts:["Preemptive","Non-Preemptive","Batch","Kernel"],a:0},
+  {q:"26. What is the type of the FCFS scheduler?",opts:["Preemptive","Non-Preemptive","Batch","Kernel"],a:1},
+  {q:"27. What is the type of the SJF scheduler?",opts:["Preemptive","Non-Preemptive","Batch","Kernel"],a:1},
+  {q:"28. What is the type of the SRTF scheduler?",opts:["Preemptive","Non-Preemptive","Batch","Kernel"],a:0},
+  {q:"29. What is the disadvantage of the FCFS scheduler?",opts:["Starvation","Convoy effect","Long queue","Short queue"],a:1},
+  {q:"30. What is the disadvantage of the priority scheduler?",opts:["Starvation","Convoy effect","Long queue","Low utilization"],a:0},
+  {q:"31. What is dispatch latency?",opts:["The time taken by the dispatcher to stop one process and start another","The time taken by the processor to write into disk","The whole time taken by all processors","The process scheduling time"],a:0},
+  {q:"32. What does concurrency mean?",opts:["Support more than one task making progress but not running simultaneously","Support more than one task making progress and running simultaneously","Do not support more than one task making progress but not running simultaneously","Do not support more than one task making progress but running simultaneously"],a:0},
+  {q:"33. What does parallel mean?",opts:["Support more than one task making progress but not running simultaneously","Support more than one task making progress and running simultaneously","Do not support more than one task making progress but not running simultaneously","Do not support more than one task making progress but running simultaneously"],a:1},
+  {q:"34. What is the process control block?",opts:["Process secondary storage section","Process variables","Data structure for saving the process memory","Data structure for saving the process state"],a:3},
+  {q:"35. The percentage of time in which the CPU is busy?",opts:["Turnaround time","Waiting time","Utilization","Throughput"],a:2},
+  {q:"36. The overall time required to run a process from initialization to termination.",opts:["Turnaround time","Waiting time","Utilization","Throughput"],a:0},
+  {q:"37. The overall time where a process is in the ready queue?",opts:["Turnaround time","Waiting time","Utilization","Throughput"],a:1},
+  {q:"38. Which of the following conditions is required for a deadlock to be possible?",opts:["Mutual exclusion","No resource can be forcibly removed from a process holding it","A process may hold allocated resources while awaiting assignment of other resources","All the above"],a:3},
+  {q:"39. For a deadlock to arise, which of the following conditions must hold simultaneously?",opts:["Mutual exclusion","No preemption","Hold and wait","All the above"],a:3},
+  {q:"40. A deadlock avoidance algorithm dynamically examines the ___ to ensure a circular wait condition can never exist.",opts:["Resource allocation graph","System storage graph","Resources graph","All the above"],a:0},
+  {q:"41. The resource allocation graph is not applicable to a resource allocation system ___.",opts:["With multiple instances of each resource type","With a single instance of each resource type","Single & multiple instances of each resource type","All the above"],a:0},
+  {q:"42. The most common APIs are:",opts:["Win32 API for Windows","POSIX API for POSIX-based systems","Java API for the Java virtual machine (JVM)","All the above"],a:3},
+  {q:"43. The model in which one kernel thread is mapped to many user-level threads is called ___.",opts:["Many to One model","One to Many model","Many to Many model","One to One model"],a:0},
+  {q:"44. In the Many to One model, if a thread makes a blocking system call, ___.",opts:["The entire process will be blocked","A part of the process will stay blocked, with the rest running","The entire process will run","An error will occur"],a:0},
+  {q:"45. In the Many to One model, multiple threads are unable to run in parallel on multiprocessors because of ___.",opts:["Only one thread can access the kernel at a time","Many user threads have access to just one kernel thread","There is only one kernel thread","None of the mentioned"],a:0},
+  {q:"46. The One to One model is ___ than the Many to One model.",opts:["Better","Worse","Equal","Equal or worse"],a:0},
+  {q:"47. Which one of the following is not shared by threads?",opts:["Registers","Stack","Registers and stack","Data section"],a:2},
+  {q:"48. If one thread opens a file with read privileges, then ___.",opts:["Other threads in another process can also read from that file","Any other thread in the operating system can read from that file","Other threads in the same process can also read from that file","Any other thread in the operating system cannot read from that file"],a:2},
+  {q:"49. Multithreading on a multi-CPU or multi-core machine ___.",opts:["Decreases parallelism","Decreases concurrency","Doesn't affect the performance","Exploits parallelism and concurrency"],a:3},
+  {q:"50. Scheduling decisions may take place when a process ___.",opts:["Switches from running to waiting state","Switches from running to ready state","Switches from waiting to ready","All the mentioned"],a:3},
+  {q:"51. The time required to create a new thread in an existing process is ___.",opts:["Greater than the time required to create a new process","Less than the time required to create a new process","Equal to the time required to create a new process","Larger than the context switch overhead"],a:1},
+  {q:"52. Which of the following condition is required for a deadlock to be possible?",opts:["A process may hold allocated resources while awaiting assignment of other resources","No resource can be forcibly removed from a process holding it","Mutual exclusion","All the above"],a:3},
+  {q:"53. A system is in a safe state only if there exists a ___.",opts:["Safe allocation","Safe resource","Safe sequence","All the above"],a:2},
+  {q:"54. The circular wait condition can be prevented by which of the following?",opts:["Defining a linear ordering of resource types","Using thread","Using pipe","All the above"],a:0},
+  {q:"55. A wait() system call is used to make a process wait for an I/O device to become ready.",opts:["True","False"],a:1},
+  {q:"56. Immediately after a fork() is executed, the child process and the parent process have no shared variables.",opts:["True","False"],a:0},
+  {q:"57. The real difficulty with SJF in short-term scheduling is ___.",opts:["Knowing the length of the process CPU request","Too complex to implement","Memory excessive algorithm","All the above"],a:0},
+  {q:"58. The One to One model allows ___.",opts:["Higher concurrency","Lower concurrency","Higher overhead","Lower overhead"],a:0},
+  {q:"59. The Many to One model allows ___.",opts:["Higher concurrency","Lower concurrency","Higher overhead","Lower overhead"],a:1},
+  {q:"60. What does the deadlock avoidance algorithm dynamically examine to ensure a circular wait condition can never exist?",opts:["Allocation matrix","Available resources","Needed matrix","Resource allocation graph"],a:3}
+];
+
+let current = 0, score = 0, wrong = 0, answered = false;
+
+function startQuiz() {
+  current = 0; score = 0; wrong = 0; answered = false;
+  document.getElementById('score-card').style.display = 'none';
+  document.getElementById('quiz-body').style.display = 'block';
+  renderQ();
+}
+
+function renderQ() {
+  const q = QS[current];
+  document.getElementById('progress-bar').style.width = ((current / QS.length) * 100) + '%';
+  document.getElementById('q-counter').textContent = 'Question ' + (current + 1) + ' of ' + QS.length;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('next-btn').style.display = 'none';
+  answered = false;
+
+  const labels = ['a', 'b', 'c', 'd'];
+  const container = document.getElementById('options');
+  container.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = labels[i] + ')  ' + opt;
+    btn.onclick = () => pick(i);
+    container.appendChild(btn);
+  });
+}
+
+function pick(i) {
+  if (answered) return;
+  answered = true;
+  const q = QS[current];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('feedback');
+  if (i === q.a) {
+    btns[i].classList.add('correct');
+    fb.textContent = '✓  Correct!';
+    fb.className = 'feedback ok';
+    score++;
+  } else {
+    btns[i].classList.add('wrong');
+    btns[q.a].classList.add('reveal');
+    fb.textContent = '✗  Wrong. Correct answer: ' + ['a','b','c','d'][q.a] + ')  ' + q.opts[q.a];
+    fb.className = 'feedback err';
+    wrong++;
+  }
+  if (current < QS.length - 1) {
+    document.getElementById('next-btn').style.display = 'inline-block';
+  } else {
+    setTimeout(showScore, 700);
+  }
+}
+
+function nextQ() {
+  current++;
+  if (current < QS.length) renderQ();
+  else showScore();
+}
+
+function showScore() {
+  document.getElementById('quiz-body').style.display = 'none';
+  document.getElementById('score-card').style.display = 'block';
+  document.getElementById('progress-bar').style.width = '100%';
+  const pct = Math.round((score / QS.length) * 100);
+  document.getElementById('score-big').textContent = score + ' / ' + QS.length;
+  document.getElementById('score-pct').textContent = pct + '%';
+  document.getElementById('correct-count').textContent = score;
+  document.getElementById('wrong-count').textContent = wrong;
+  let msg, trophy;
+  if (pct >= 90) { msg = 'Outstanding! You have mastered this material.'; trophy = '🏆'; }
+  else if (pct >= 75) { msg = 'Great job! Just a little more review needed.'; trophy = '🎉'; }
+  else if (pct >= 60) { msg = 'Good effort. Keep reviewing the tricky topics.'; trophy = '📚'; }
+  else { msg = 'Keep studying — you\'ll nail it next time!'; trophy = '💪'; }
+  document.getElementById('score-msg').textContent = msg;
+  document.getElementById('trophy').textContent = trophy;
+}
+
+startQuiz();
+</script>
+</body>
+</html>
